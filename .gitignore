@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Arduino
+**/.arduino/
+**/*.elf
+**/*.hex
+
+# Data outputs
+data/raw/*
+data/processed/*
+!data/raw/.keep
+!data/processed/.keep
+
+# Python
+__pycache__/
+*.pyc
+.venv/
