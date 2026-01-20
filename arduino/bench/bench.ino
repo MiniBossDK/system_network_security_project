@@ -3,20 +3,22 @@
 #include <GCM.h>
 
 static const uint32_t BAUD = 115200;
-static const size_t SIZES[] = {16, 32, 64, 128, 256};
-static const size_t NSIZES = sizeof(SIZES)/sizeof(SIZES[0]);
-static const uint16_t REPS = 200;
+static const size_t SIZES[] = {16, 32, 64, 128, 256, 512};
+static const size_t NSIZES = sizeof(SIZES) / sizeof(SIZES[0]);
+static const uint16_t REPS = 50;
 
 static uint8_t KEY_16[16]   = {0};
 static uint8_t NONCE_12[12] = {0};
 static uint8_t AAD[16]      = {0};
 
-static uint8_t PT[256];
-static uint8_t CT[256];
+static uint8_t PT[512];
+static uint8_t CT[512];
 static uint8_t TAG[16];
 
+static volatile uint8_t sink = 0;
+
 static inline uint32_t now_us() { return micros(); }
-static inline uint32_t us_to_cycles(uint32_t us) { return us * 16UL; }
+static inline uint32_t us_to_cycles(uint32_t us) { return us * 16UL; } 
 
 void fill_inputs() {
   for (size_t i = 0; i < sizeof(PT); i++) PT[i] = (uint8_t)(i & 0xFF);
@@ -36,15 +38,9 @@ uint32_t bench_aes_gcm(size_t mlen) {
     gcm.addAuthData(AAD, sizeof(AAD));
     gcm.encrypt(CT, PT, mlen);
     gcm.computeTag(TAG, sizeof(TAG));
+    sink ^= CT[0] ^ TAG[0];
   }
 
-  return now_us() - t0;
-}
-
-// stub for now
-uint32_t bench_ascon(size_t mlen) {
-  uint32_t t0 = now_us();
-  for (uint16_t i = 0; i < REPS; i++) (void)mlen;
   return now_us() - t0;
 }
 
@@ -61,7 +57,7 @@ void setup() {
     uint32_t aes_us = bench_aes_gcm(mlen);
     float aes_avg = (float)aes_us / (float)REPS;
 
-    Serial.print(F("AES-GCM,"));
+    Serial.print(F("AES128-GCM-ENC,"));
     Serial.print(mlen); Serial.print(F(","));
     Serial.print(REPS); Serial.print(F(","));
     Serial.print(aes_us); Serial.print(F(","));
@@ -73,3 +69,10 @@ void setup() {
 }
 
 void loop() {}
+
+
+
+
+
+
+

@@ -10,12 +10,13 @@ def main():
     plt.figure(figsize=(6, 4))
 
     for algo in df["algo"].unique():
-        sub = df[df["algo"] == algo]
-        plt.plot(sub["msg_len"], sub["energy_uJ"], marker="o", label=algo)
+        sub = df[df["algo"] == algo].sort_values("msg_len")
+        # Plot RAW energy (no baseline subtraction)
+        plt.plot(sub["msg_len"], sub["energy_uJ_raw"], marker="o", label=algo)
 
     plt.xlabel("Message length (bytes)")
     plt.ylabel("Energy per operation (µJ)")
-    plt.title("Energy vs message size")
+    plt.title("RAW energy vs message size")
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
