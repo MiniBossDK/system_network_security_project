@@ -1,22 +1,23 @@
 import pandas as pd
 from pathlib import Path
 
-# Paths
 RAW_DATA = Path("data/raw/timing_results.csv")
 OUT_DATA = Path("data/processed/summary.csv")
 
-# Load CSV
-df = pd.read_csv(RAW_DATA)
 
-# Basic sanity check
-print("Loaded data:")
-print(df.head())
+def main():
+    df = pd.read_csv(RAW_DATA)
 
-# Sort for readability
-df = df.sort_values(by=["algo", "msg_len"])
+    print("Loaded timing data:")
+    print(df.head())
 
-# Save cleaned version
-OUT_DATA.parent.mkdir(parents=True, exist_ok=True)
-df.to_csv(OUT_DATA, index=False)
+    df = df.sort_values(by=["algo", "msg_len"]).reset_index(drop=True)
 
-print(f"\nProcessed data saved to {OUT_DATA}")
+    OUT_DATA.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(OUT_DATA, index=False)
+
+    print(f"\nProcessed timing data saved to {OUT_DATA}")
+
+
+if __name__ == "__main__":
+    main()
