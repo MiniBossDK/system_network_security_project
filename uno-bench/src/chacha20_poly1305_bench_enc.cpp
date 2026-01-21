@@ -17,7 +17,7 @@ const size_t TAG_SIZE = 16;
 const size_t IV_SIZE = 12;   // ChaChaPoly typically uses a 12-byte (96-bit) nonce
 const size_t KEY_SIZE = 32;  // ChaCha20 uses a 32-byte (256-bit) Key
 
-const int REPS = 1; // 50
+const int REPS = 10000; // 50
 
 // Buffers
 uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -37,8 +37,10 @@ uint8_t key[KEY_SIZE] = {
 const size_t sizes[] = {512}; // 16, 32, 64, 128, 256, 512
 
 void setup() {
-    /* Serial.begin(115200);
-    while (!Serial); */
+    Serial.begin(115200);
+    while (!Serial);
+
+    Serial.println(F("### TRIGGER! ###"));
 
     // Set the key once
     chachaPoly.setKey(key, KEY_SIZE);
@@ -50,7 +52,7 @@ void setup() {
         
         memset(buffer, 0x42, msgSize);
 
-        /* unsigned long start = micros(); */
+        //unsigned long start = micros();
 
         for (int r = 0; r < REPS; r++) {
             // 1. Set IV (Nonce)
@@ -79,10 +81,7 @@ void setup() {
         Serial.print(F(","));
         Serial.println(approx_cycles); */
     }
-    /* Serial.println(F("# Done")); */
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
-    sleep_cpu();
+    Serial.println(F("# Done"));
 }
 
 void loop() {}

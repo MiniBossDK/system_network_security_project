@@ -18,7 +18,7 @@ const size_t TAG_SIZE = 16;
 const size_t IV_SIZE = 16;   // ASCON uses a 16-byte Nonce (unlike GCM's 12)
 const size_t KEY_SIZE = 16;  // ASCON-128 uses a 16-byte Key
 
-const int REPS = 1; // 50 
+const int REPS = 10000; // 50 
 
 // Buffers
 uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -36,20 +36,22 @@ uint8_t key[KEY_SIZE] = {
 const size_t sizes[] = {512}; // 16, 32, 64, 128, 256, 512
 
 void setup() {
-    /* Serial.begin(115200);
-    while (!Serial); */
+    Serial.begin(115200);
+    while (!Serial);
+
+    Serial.println(F("### TRIGGER! ###"));
 
     // Set the key once (Session setup)
     ascon.setKey(key, KEY_SIZE);
 
-    /* Serial.println(F("algo,msg_len,reps,total_us,avg_us,approx_cycles")); */
+    //Serial.println(F("algo,msg_len,reps,total_us,avg_us,approx_cycles"));
 
     for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
         size_t msgSize = sizes[i];
         
         memset(buffer, 0x42, msgSize);
 
-        /* unsigned long start = micros(); */
+        //unsigned long start = micros();
 
         for (int r = 0; r < REPS; r++) {
             // 1. Set IV (Nonce) - Required per message
@@ -78,10 +80,7 @@ void setup() {
         Serial.print(F(","));
         Serial.println(approx_cycles); */
     }
-    /* Serial.println(F("# Done")); */
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
-    sleep_cpu();
+    Serial.println(F("# Done"));
 }
 
 void loop() {}

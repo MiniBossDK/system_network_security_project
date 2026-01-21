@@ -20,7 +20,7 @@ const size_t IV_SIZE = 12;
 const size_t KEY_SIZE = 16;
 
 // Number of repetitions per message size to calculate average
-const int REPS = 1; // 50
+const int REPS = 10000;
 
 // Buffers
 uint8_t buffer[MAX_MESSAGE_SIZE];
@@ -29,11 +29,13 @@ uint8_t iv[IV_SIZE] = {0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x1
 uint8_t key[KEY_SIZE] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x00};
 
 // Message sizes to test
-const size_t sizes[] = {16}; // 16, 32, 64, 128, 256, 512
+const size_t sizes[] = {512}; // 16, 32, 64, 128, 256, 512
 
 void setup() {
-    /* Serial.begin(115200);
-    while (!Serial); */
+    Serial.begin(115200);
+    while (!Serial);
+
+    Serial.println(F("### TRIGGER! ###"));
 
     // Set the key once
     gcm.setKey(key, KEY_SIZE);
@@ -49,7 +51,7 @@ void setup() {
         memset(buffer, 0x42, msgSize);
 
         // --- Start Timing Block ---
-        /* unsigned long start = micros(); */
+        //unsigned long start = micros();
 
         for (int r = 0; r < REPS; r++) {
             // 1. Reset IV for each packet
@@ -81,13 +83,9 @@ void setup() {
         Serial.print(F(","));
         Serial.print(avg_us, 2); // Print with 2 decimal places
         Serial.print(F(","));
-        Serial.println(approx_cycles); */   
+        Serial.println(approx_cycles);   */ 
     }
-    /* Serial.println(F("# Done")); */
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
-    sleep_cpu();
-
+    Serial.println(F("# Done"));
 }
 
 void loop() {
