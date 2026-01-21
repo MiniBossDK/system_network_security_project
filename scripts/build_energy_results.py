@@ -11,9 +11,12 @@ VOLTAGE_V = 9.0
 # Map folder -> algo name in final table
 ALGO_MAP = {
     "aes128_gcm": "AES128-GCM",
+    "aes256_gcm": "AES256-GCM",
     "ascon": "ASCON128",
     "chacha": "ChaChaPoly",
+    "baseline": "BASELINE",  
 }
+
 
 # Current column candidates (depends on how Keithley export looks)
 CURRENT_COL_CANDIDATES = [
@@ -34,27 +37,32 @@ def find_current_column(df: pd.DataFrame) -> str:
     return numeric_cols[0]
 
 def infer_msg_len_from_name(fname: str) -> int:
+    # baseline files have no msg_len
+    if fname.startswith("baseline"):
+        return 0
+
     m = re.search(r"_(\d+)\.csv$", fname)
     if not m:
         raise ValueError(f"Cannot infer msg_len from filename: {fname} (expected enc_16.csv etc)")
     return int(m.group(1))
 
 def infer_mode_from_name(fname: str) -> str:
+    if fname.startswith("baseline"):
+        return "BASE"
     if fname.startswith("enc_"):
         return "ENC"
     if fname.startswith("dec_"):
         return "DEC"
-    raise ValueError(f"Filename must start with enc_ or dec_: {fname}")
+    raise ValueError(f"Filename must start with enc_ or dec_ or baseline: {fname}")
 
-def compute_avg_current_mA(csv_path: Path) -> float:
+def compute_avg_current_mA(csv_path: Path, t_min: float = None, t_max: float = None) -> float:
     """
-    Robust parser for Keithley DMM6500 CSV exports that may contain
-    metadata, ragged rows, mixed delimiters, etc.
+    Average current (mA) from Keithley CSV.
 
-    Strategy: scan all lines and extract numeric tokens; keep values
-    that look like current readings (in A). Then average.
+    If t_min/t_max are given, we only average samples whose Relative Time is in [t_min, t_max].
+    Relative Time is assumed to be column 14 (0-based index 13) in your export:
+    ... Origin,Relative Time,Channel,CH Label
     """
-
     values_A = []
 
     with open(csv_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -63,29 +71,40 @@ def compute_avg_current_mA(csv_path: Path) -> float:
             if not line:
                 continue
 
-            # Split on common delimiters (comma, semicolon, tabs)
-            parts = re.split(r"[;, \t]+", line)
+            parts = line.split(",")
+            if len(parts) < 15:
+                continue
 
-            for tok in parts:
-                # normalize scientific notation like 1.23E-3
-                try:
-                    v = float(tok)
-                except ValueError:
-                    continue
+            unit = parts[1].strip()
+            if "Amp" not in unit:
+                continue
 
-                # Heuristic filter: keep values that look like current in Amps.
-                # Arduino current is typically 0.02–0.10 A.
-                # Accept a wider range just in case.
-                if 1e-6 < abs(v) < 1.0:
-                    values_A.append(v)
+            # reading in amps
+            try:
+                val_A = float(parts[0].strip())
+            except ValueError:
+                continue
+
+            # relative time (seconds)
+            # In your export: "... Origin,Relative Time,Channel,CH Label"
+            # Relative Time appears near the end and looks like 0.000100000
+            try:
+                rel_t = float(parts[13].strip())
+            except ValueError:
+                rel_t = None
+
+            if t_min is not None and rel_t is not None and rel_t < t_min:
+                continue
+            if t_max is not None and rel_t is not None and rel_t > t_max:
+                continue
+
+            if 1e-6 < abs(val_A) < 1.0:
+                values_A.append(val_A)
 
     if not values_A:
-        raise ValueError(f"No current-like numeric values found in {csv_path}")
+        raise ValueError(f"No current readings found in {csv_path} (after time filtering).")
 
-    avg_A = sum(values_A) / len(values_A)
-    avg_mA = avg_A * 1000.0
-    return float(avg_mA)
-
+    return float((sum(values_A) / len(values_A)) * 1000.0)
 
 
 def main():
@@ -101,7 +120,12 @@ def main():
             mode = infer_mode_from_name(fname)
             msg_len = infer_msg_len_from_name(fname)
 
-            avg_current_mA = compute_avg_current_mA(csv_path)
+            if folder == "baseline":
+                # baseline.csv in your example starts at ~10s; take a stable window
+                avg_current_mA = compute_avg_current_mA(csv_path, t_min=10.5, t_max=20.0)
+            else:
+                avg_current_mA = compute_avg_current_mA(csv_path)
+
 
             rows.append({
                 "algo": f"{algo_name}-{mode}",
