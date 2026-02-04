@@ -4,5 +4,5 @@ This repository contains code and the paper for an experimental comparison of AE
 
 ## Structure
 - `arduino/bench/` Arduino benchmark harness (C/C++ + libraries)
-- `data/raw/` raw serial logs and power traces
+- `raw-data` raw serial logs and power traces
 - `scripts/` parsing + plotting scripts
